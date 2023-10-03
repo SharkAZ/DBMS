@@ -1,0 +1,76 @@
+
+create database hw3;
+
+use hw3;
+
+create table merchants
+(
+    mid                 int(4) not null,
+    name                varchar(40),
+    city                varchar(40),
+    state               varchar(40),
+    primary key(mid) 
+);
+
+create table products
+(
+    pid                 int(4) not null,
+    name                varchar(40),
+    category            varchar(40),
+    description         varchar(1000),
+    constraint  name_constr check (name in ('Printer', 'Ethernet Adapter', 'Desktop', 'Hard Drive', 'Laptop', 'Router', 'Network Card', 'Super Drive', 'Monitor')),
+    constraint  category_constr check (category in ('Peripheral', 'Networking', 'Computer')),
+    primary key(pid)
+);
+
+
+create table sell
+(
+	mid 				int(4) not null,
+    pid 				int(4) not null,
+	price				float(10, 2) not null,
+    quantity_available	int(4),
+    constraint price_constr check (price between 0 and 100000),
+    constraint quantity_available_constr check (quantity_available between 0 and 1000),
+    foreign key(mid) references merchants(mid),
+    foreign key(pid) references products(pid)
+);
+
+create table orders
+(
+    oid                 int(4) not null,
+    shipping_method     varchar(40),
+    shipping_cost       int(40),
+    constraint  shipping_method_constr check (shipping_method in ('UPS', 'FedEx', 'USPS')),
+    constraint  shipping_cost_constr check (shipping_cost between 0 and 500),
+    primary key(oid)
+);
+
+
+create table contain
+(
+   oid      int(4) not null,
+   pid      int(4) not null,
+   foreign key(oid) references orders(oid),
+   foreign key(pid) references products(pid)
+);
+
+
+create table customers
+(
+   cid          int(4) not null,
+   fullname     varchar(40),
+   city         varchar(40),
+   state        varchar(40),
+   primary key(cid) 
+);
+
+
+create table place
+(
+   cid          int(4) not null,
+   oid          int(4) not null,
+   order_data   varchar(40),
+   foreign key(cid) references customers(cid),
+   foreign key(oid) references orders(oid)
+);
