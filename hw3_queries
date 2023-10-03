@@ -40,7 +40,7 @@ create table orders
 (
     oid                 int(4) not null,
     shipping_method     varchar(40),
-    shipping_cost       int(40),
+    shipping_cost       float(10, 2) not null,
     constraint  shipping_method_constr check (shipping_method in ('UPS', 'FedEx', 'USPS')),
     constraint  shipping_cost_constr check (shipping_cost between 0 and 500),
     primary key(oid)
