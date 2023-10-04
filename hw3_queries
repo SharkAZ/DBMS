@@ -152,26 +152,13 @@ where s.mid is null;
 
 Q3)How many customers bought SATA drives but not any routers?
 
-
-
 select count(c.cid) as customers_count
 from customers c
 inner join place p on c.cid = p.cid
 inner join orders o on p.oid = o.oid
 inner join contain ct on o.oid = ct.oid
 inner join products pd on ct.pid = pd.pid
-where pd.name = 'SATA Drive'
-and not exists (
-    select c2.cid
-    from customers c2
-    inner join place p2 on c2.cid = p2.cid
-    inner join orders o2 on p2.oid = o2.oid
-    inner join contain ct2 on o2.oid = ct2.oid
-    inner join products pd2 on ct2.pid = pd2.pid
-    where pd2.name = 'Router'
-);
-
-
+where pd.description like '%SATA%' and pd.name not like '%Router%';
 
 
 --------------------------------------------
