@@ -1,7 +1,11 @@
 
 create database hw3;
 
+--------------------------------------------
+
 use hw3;
+
+--------------------------------------------
 
 create table merchants
 (
@@ -11,6 +15,10 @@ create table merchants
     state               varchar(40),
     primary key(mid) 
 );
+
+
+
+-------------------------------------------
 
 create table products
 (
@@ -24,6 +32,9 @@ create table products
 );
 
 
+
+--------------------------------------------
+
 create table sell
 (
 	mid 				int(4) not null,
@@ -36,6 +47,10 @@ create table sell
     foreign key(pid) references products(pid)
 );
 
+
+
+--------------------------------------------
+
 create table orders
 (
     oid                 int(4) not null,
@@ -47,6 +62,10 @@ create table orders
 );
 
 
+
+
+--------------------------------------------
+
 create table contain
 (
    oid      int(4) not null,
@@ -55,6 +74,10 @@ create table contain
    foreign key(pid) references products(pid)
 );
 
+
+
+
+--------------------------------------------
 
 create table customers
 (
@@ -66,11 +89,351 @@ create table customers
 );
 
 
+
+
+--------------------------------------------
+
 create table place
 (
    cid          int(4) not null,
    oid          int(4) not null,
-   order_data   varchar(40),
+   order_date   date,
    foreign key(cid) references customers(cid),
    foreign key(oid) references orders(oid)
 );
+
+
+
+
+--------------------------------------------
+
+Q1)List names and sellers of products that are no longer available (quantity=0)
+
+
+
+select products.name as products_name, merchants.name as seller_name
+from products 
+inner join sell on products.pid = sell.pid
+inner join merchants on sell.mid = merchants.mid
+where sell.quantity_available = 0;
+
+
+OR
+
+
+select p.name as products_name, m.name as seller_name
+from products p
+inner join sell s on p.pid = s.pid
+inner join merchants m on s.mid = m.mid
+where s.quantity_available = 0;
+
+
+
+
+--------------------------------------------
+
+Q2)List names and descriptions of products that are not sold.
+
+
+select products.name as products_name, products.description
+from products 
+left join sell on products.pid = sell.pid
+where sell.mid is null;
+
+OR
+
+select p.name as products_name, p.description
+from products p
+left join sell s on p.pid = s.pid
+where s.mid is null;
+
+
+--------------------------------------------
+
+Q3)How many customers bought SATA drives but not any routers?
+
+
+
+select count(c.cid) as customers_count
+from customers c
+inner join place p on c.cid = p.cid
+inner join orders o on p.oid = o.oid
+inner join contain ct on o.oid = ct.oid
+inner join products pd on ct.pid = pd.pid
+where pd.name = 'SATA Drive'
+and not exists (
+    select c2.cid
+    from customers c2
+    inner join place p2 on c2.cid = p2.cid
+    inner join orders o2 on p2.oid = o2.oid
+    inner join contain ct2 on o2.oid = ct2.oid
+    inner join products pd2 on ct2.pid = pd2.pid
+    where pd2.name = 'Router'
+);
+
+
+
+
+--------------------------------------------
+
+Q4)HP has a 20% sale on all its Networking products.
+
+
+update sell
+set price = price * 0.8
+where mid =
+(
+    select mid 
+    from merchants
+    where name = 'HP'
+)
+  and pid in 
+(
+    select pid 
+    from products
+    where category = 'Networking'
+);
+
+
+
+--------------------------------------------
+
+Q5)What did Uriel Whitney order from Acer? (make sure to at least retrieve product names and prices).
+
+
+select p.name as product_name, s.price
+from products p
+inner join contain c on p.pid = c.pid
+inner join orders o on c.oid = o.oid
+inner join place pl on o.oid = pl.oid
+inner join customers ct on pl.cid = ct.cid
+inner join sell s on p.pid = s.pid
+inner join merchants m on s.mid = m.mid
+where ct.fullname = 'Uriel Whitney'
+and m.name = 'Acer';
+
+
+
+--------------------------------------------
+
+Q6)List the annual total sales for each company (sort the results along the company and the year attributes).
+
+
+select m.name as company, year(p.order_date) as year, sum(s.price * s.quantity_available) as annual_total_sales
+from merchants m
+inner join sell s on m.mid = s.mid
+inner join products pd on s.pid = pd.pid
+inner join contain c on pd.pid = c.pid
+inner join place p on  c.oid = p.oid
+group by m.name, year(p.order_date)
+order by m.name, year(p.order_date);
+
+
+
+--------------------------------------------
+
+Q7)Which company had the highest annual revenue and in what year?
+
+
+select m.name as company, year(p.order_date) as year, sum(s.price * s.quantity_available) as annual_total_sales
+from merchants m
+inner join sell s on m.mid = s.mid
+inner join products pd on s.pid = pd.pid
+inner join contain c on pd.pid = c.pid
+inner join place p on  c.oid = p.oid
+group by m.name, year(p.order_date)
+having annual_total_sales >= all
+(
+    select sum(s.price * s.quantity_available) as annual_total_sales
+    from merchants m
+    inner join sell s on m.mid = s.mid
+    inner join contain c on s.pid = c.pid
+    inner join place p on  c.oid = p.oid
+    group by m.name, year(p.order_date)
+)
+
+
+
+--------------------------------------------
+
+Q8)On average, what was the cheapest shipping method used ever?
+
+
+with
+    CheapestShipping as
+    (
+        select oid, shipping_method, min(shipping_cost) as min_shipping_cost
+        from orders
+        group by oid, shipping_method
+    )
+select shipping_method, avg(min_shipping_cost) as average_cheapest_shipping_cost
+from CheapestShipping
+group by shipping_method
+having average_cheapest_shipping_cost <=
+(
+    select avg(min_shipping_cost) as average_cheapest_shipping_cost
+    from CheapestShipping
+)
+
+
+--------------------------------------------
+
+Q9)What is the best sold ($) category for each company?
+
+
+select m.name as company, p.category as best_sold_category, sum(s.price * s.quantity_available) as total_revenue
+from merchants m
+inner join sell s on m.mid = s.mid
+inner join products p on s.pid = p.pid
+group by m.name, p.category
+having sum(s.price * s.quantity_available) = 
+(
+    select max(total_revenue)
+    from 
+    (
+        select m.name as company, p.category as best_sold_category, sum(s.price * s.quantity_available) as total_revenue
+        from merchants m
+        inner join sell s on m.mid = s.mid
+        inner join products p on s.pid = p.pid
+        group by m.name, p.category
+    )   as max_revenue_per_category
+    where max_revenue_per_category.company = m.name
+);
+
+
+
+
+--------------------------------------------
+
+Q10)For each company find out which customers have spent the most and the least amounts.
+
+
+with CustomerSpending as
+(
+    select 
+        m.mid as MerchantID, 
+        m.name as MerchantName, 
+        c.cid as CustomerID, 
+        c.fullname as CustomerName, 
+        sum(s.price * s.quantity_available) as TotalSpent
+    from merchants m
+    inner join sell s on m.mid = s.mid
+    inner join products pd on s.pid = pd.pid
+    inner join contain ct on pd.pid = ct.pid
+    inner join place p on  ct.oid = p.oid
+    inner join customers c on p.cid = c.cid
+    group by m.mid, m.name, c.cid, c.fullname
+)
+select 
+    cs.MerchantID, 
+    cs.MerchantName,
+    cs.CustomerID,
+    cs.CustomerName,
+    cs.TotalSpent
+from CustomerSpending cs
+inner join
+(
+    select MerchantID, max(TotalSpent) as MaxSpending
+    from CustomerSpending
+    group by MerchantID
+)as MaxSpendingPerMerchant on cs.MerchantID = MaxSpendingPerMerchant.MerchantID
+    and cs.TotalSpent = MaxSpendingPerMerchant.MaxSpending; 
+
+
+
+with CustomerSpending as
+(
+    select 
+        m.mid as MerchantID, 
+        m.name as MerchantName, 
+        c.cid as CustomerID, 
+        c.fullname as CustomerName, 
+        sum(s.price * s.quantity_available) as TotalSpent
+    from merchants m
+    inner join sell s on m.mid = s.mid
+    inner join products pd on s.pid = pd.pid
+    inner join contain ct on pd.pid = ct.pid
+    inner join place p on  ct.oid = p.oid
+    inner join customers c on p.cid = c.cid
+    group by m.mid, m.name, c.cid, c.fullname
+)
+select 
+    cs.MerchantID, 
+    cs.MerchantName,
+    cs.CustomerID,
+    cs.CustomerName,
+    cs.TotalSpent
+from CustomerSpending cs
+inner join
+(
+    select MerchantID, min(TotalSpent) as MinSpending
+    from CustomerSpending
+    group by MerchantID
+)as MinSpendingPerMerchant on cs.MerchantID = MinSpendingPerMerchant.MerchantID
+    and cs.TotalSpent = MinSpendingPerMerchant.MinSpending; 
+
+
+
+OR
+
+
+/*
+with 
+CustomerSpending as
+(
+    select 
+        m.mid as MerchantID, 
+        m.name as MerchantName, 
+        c.cid as CustomerID, 
+        c.fullname as CustomerName, 
+        sum(s.price * s.quantity_available) as TotalSpent
+    from merchants m
+    inner join sell s on m.mid = s.mid
+    inner join products pd on s.pid = pd.pid
+    inner join contain ct on pd.pid = ct.pid
+    inner join place p on  ct.oid = p.oid
+    inner join customers c on p.cid = c.cid
+    group by m.mid, m.name, c.cid, c.fullname
+),
+
+MostSpentPerMerchant as
+(
+    select MerchantID, CustomerID, TotalSpent
+    from CustomerSpending
+    where (MerchantID, TotalSpent) in 
+    (
+        select MerchantID, max(TotalSpent) as MostSpent
+        from CustomerSpending
+        group by MerchantID
+    )
+),
+
+LeastSpentPerMerchant as (
+    select MerchantID, CustomerID, TotalSpent
+    from CustomerSpending
+    where (MerchantID, TotalSpent) in 
+    (
+        select MerchantID, min(TotalSpent) as LeastSpent
+        from CustomerSpending
+        group by MerchantID
+    )
+)
+
+select 
+    cs.MerchantID, 
+    cs.MerchantName,
+    cs.CustomerID,
+    cs.CustomerName,
+    cs.TotalSpent,
+    
+    msc.CustomerID as MostSpentCustomerID,
+    msc.CustomerName as MostSpentCustomerName,
+    msc.MostSpent as MostSpentAmount,
+    
+    lsc.CustomerID as LeastSpentCustomerID,
+    lsc.CustomerName as LeastSpentCustomerName,
+    cs2.LeastSpent as LeastSpentAmount
+from CustomerSpending cs
+inner join MostSpentPerMerchant msc on cs.MerchantID = msc.MerchantID
+inner join LeastSpentPerMerchant lsc on cs.MerchantID = lsc.MerchantID;
+*/
