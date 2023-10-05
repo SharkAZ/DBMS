@@ -419,7 +419,7 @@ select
     
     lsc.CustomerID as LeastSpentCustomerID,
     lsc.CustomerName as LeastSpentCustomerName,
-    cs2.LeastSpent as LeastSpentAmount
+    lsc.LeastSpent as LeastSpentAmount
 from CustomerSpending cs
 inner join MostSpentPerMerchant msc on cs.MerchantID = msc.MerchantID
 inner join LeastSpentPerMerchant lsc on cs.MerchantID = lsc.MerchantID;
