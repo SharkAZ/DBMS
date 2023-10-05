@@ -347,26 +347,10 @@ inner join
     from CustomerSpending
     group by MerchantID
 )as MostSpentPerMerchant on cs.MerchantID = MostSpentPerMerchant.MerchantID
-    and cs.TotalSpent = MostSpentPerMerchant.MostSpent; 
+    and cs.TotalSpent = MostSpentPerMerchant.MostSpent
+    
+union
 
-
-
-with CustomerSpending as
-(
-    select 
-        m.mid as MerchantID, 
-        m.name as MerchantName, 
-        c.cid as CustomerID, 
-        c.fullname as CustomerName, 
-        sum(s.price * s.quantity_available) as TotalSpent
-    from merchants m
-    inner join sell s on m.mid = s.mid
-    inner join products pd on s.pid = pd.pid
-    inner join contain ct on pd.pid = ct.pid
-    inner join place p on  ct.oid = p.oid
-    inner join customers c on p.cid = c.cid
-    group by m.mid, m.name, c.cid, c.fullname
-)
 select 
     cs.MerchantID, 
     cs.MerchantName,
@@ -380,69 +364,5 @@ inner join
     from CustomerSpending
     group by MerchantID
 )as LeastSpentPerMerchant on cs.MerchantID = LeastSpentPerMerchant.MerchantID
-    and cs.TotalSpent = LeastSpentPerMerchant.LeastSpent; 
-
-
-
-OR
-
-
-/*
-with CustomerSpending as
-(
-    select 
-        m.mid as MerchantID, 
-        m.name as MerchantName, 
-        c.cid as CustomerID, 
-        c.fullname as CustomerName, 
-        sum(s.price * s.quantity_available) as TotalSpent
-    from merchants m
-    inner join sell s on m.mid = s.mid
-    inner join products pd on s.pid = pd.pid
-    inner join contain ct on pd.pid = ct.pid
-    inner join place p on  ct.oid = p.oid
-    inner join customers c on p.cid = c.cid
-    group by m.mid, m.name, c.cid, c.fullname
-),
-
-MostSpentPerMerchant as
-(
-    select MerchantID, CustomerID, TotalSpent
-    from CustomerSpending
-    where (MerchantID, TotalSpent) in 
-    (
-        select MerchantID, max(TotalSpent) as MostSpent
-        from CustomerSpending
-        group by MerchantID
-    )
-),
-
-LeastSpentPerMerchant as (
-    select MerchantID, CustomerID, TotalSpent
-    from CustomerSpending
-    where (MerchantID, TotalSpent) in 
-    (
-        select MerchantID, min(TotalSpent) as LeastSpent
-        from CustomerSpending
-        group by MerchantID
-    )
-)
-
-select 
-    cs.MerchantID, 
-    cs.MerchantName,
-    cs.CustomerID,
-    cs.CustomerName,
-    cs.TotalSpent,
-    
-    msc.CustomerID as MostSpentCustomerID,
-    msc.CustomerName as MostSpentCustomerName,
-    msc.MostSpent as MostSpentAmount,
-    
-    lsc.CustomerID as LeastSpentCustomerID,
-    lsc.CustomerName as LeastSpentCustomerName,
-    lsc.LeastSpent as LeastSpentAmount
-from CustomerSpending cs
-inner join MostSpentPerMerchant msc on cs.MerchantID = msc.MerchantID
-inner join LeastSpentPerMerchant lsc on cs.MerchantID = lsc.MerchantID;
-*/
+    and cs.TotalSpent = LeastSpentPerMerchant.LeastSpent
+order by Merchantname; 
