@@ -320,11 +320,11 @@ select
 from CustomerSpending cs
 inner join
 (
-    select MerchantID, max(TotalSpent) as MaxSpending
+    select MerchantID, max(TotalSpent) as MostSpent
     from CustomerSpending
     group by MerchantID
-)as MaxSpendingPerMerchant on cs.MerchantID = MaxSpendingPerMerchant.MerchantID
-    and cs.TotalSpent = MaxSpendingPerMerchant.MaxSpending; 
+)as MostSpentPerMerchant on cs.MerchantID = MostSpentPerMerchant.MerchantID
+    and cs.TotalSpent = MostSpentPerMerchant.MostSpent; 
 
 
 
@@ -353,11 +353,11 @@ select
 from CustomerSpending cs
 inner join
 (
-    select MerchantID, min(TotalSpent) as MinSpending
+    select MerchantID, min(TotalSpent) as LeastSpent
     from CustomerSpending
     group by MerchantID
-)as MinSpendingPerMerchant on cs.MerchantID = MinSpendingPerMerchant.MerchantID
-    and cs.TotalSpent = MinSpendingPerMerchant.MinSpending; 
+)as LeastSpentPerMerchant on cs.MerchantID = LeastSpentPerMerchant.MerchantID
+    and cs.TotalSpent = LeastSpentPerMerchant.LeastSpent; 
 
 
 
