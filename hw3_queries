@@ -37,10 +37,10 @@ create table products
 
 create table sell
 (
-    mid 		 	int(4) not null,
-    pid 			int(4) not null,
-    price			float(10, 2) not null,
-    quantity_available	int(4),
+    mid             int(4) not null,
+    pid             int(4) not null,
+    price           float(10, 2) not null,
+    quantity_available  int(4),
     constraint price_constr check (price between 0 and 100000),
     constraint quantity_available_constr check (quantity_available between 0 and 1000),
     foreign key(mid) references merchants(mid),
@@ -161,10 +161,34 @@ inner join products pd on ct.pid = pd.pid
 where pd.description like '%SATA%' and pd.name not like '%Router%';
 
 
+/***
+
+select count(c.cid) as customers_count
+from customers c
+inner join place p on c.cid = p.cid
+inner join orders o on p.oid = o.oid
+inner join contain ct on o.oid = ct.oid
+inner join products pd on ct.pid = pd.pid
+where pd.description like '%SATA%' and c.cid not in
+(
+    select count(c.cid) as customers_count
+    from customers c
+    inner join place p on c.cid = p.cid
+    inner join orders o on p.oid = o.oid
+    inner join contain ct on o.oid = ct.oid
+    inner join products pd on ct.pid = pd.pid
+    where pd.name like '%Router%'
+);
+
+
+***/
+
 --------------------------------------------
 
 Q4)HP has a 20% sale on all its Networking products.
 
+set sql_safe_updates = 0;
+set foreign_key_checks = 0;
 
 update sell
 set price = price * 0.8
@@ -188,7 +212,7 @@ where mid =
 Q5)What did Uriel Whitney order from Acer? (make sure to at least retrieve product names and prices).
 
 
-select p.name as product_name, s.price
+select ct.fullname as Cname, m.name as Mname, p.name as product_name, s.price
 from products p
 inner join contain c on p.pid = c.pid
 inner join orders o on c.oid = o.oid
@@ -246,13 +270,12 @@ having annual_total_sales >= all
 Q8)On average, what was the cheapest shipping method used ever?
 
 
-with
-    CheapestShipping as
-    (
-        select oid, shipping_method, min(shipping_cost) as min_shipping_cost
-        from orders
-        group by oid, shipping_method
-    )
+with CheapestShipping as
+(
+    select oid, shipping_method, min(shipping_cost) as min_shipping_cost
+    from orders
+    group by oid, shipping_method
+)
 select shipping_method, avg(min_shipping_cost) as average_cheapest_shipping_cost
 from CheapestShipping
 group by shipping_method
@@ -365,8 +388,7 @@ OR
 
 
 /*
-with 
-CustomerSpending as
+with CustomerSpending as
 (
     select 
         m.mid as MerchantID, 
