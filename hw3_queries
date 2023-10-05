@@ -55,7 +55,7 @@ create table orders
 (
     oid                 int(4) not null,
     shipping_method     varchar(40),
-    shipping_cost       decimal(10, 2) not null,
+    shipping_cost       decimal(10, 2),
     constraint  shipping_method_constr check (shipping_method in ('UPS', 'FedEx', 'USPS')),
     constraint  shipping_cost_constr check (shipping_cost between 0 and 500),
     primary key(oid)
@@ -82,9 +82,9 @@ create table contain
 create table customers
 (
    cid          int(4) not null,
-   fullname     varchar(40),
-   city         varchar(40),
-   state        varchar(40),
+   fullname     varchar(40) not null,
+   city         varchar(40) not null,
+   state        varchar(40) not null,
    primary key(cid) 
 );
 
@@ -97,7 +97,7 @@ create table place
 (
    cid          int(4) not null,
    oid          int(4) not null,
-   order_date   date,
+   order_date   date not null,
    foreign key(cid) references customers(cid),
    foreign key(oid) references orders(oid)
 );
