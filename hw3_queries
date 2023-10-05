@@ -10,9 +10,9 @@ use hw3;
 create table merchants
 (
     mid                 int(4) not null,
-    name                varchar(40),
-    city                varchar(40),
-    state               varchar(40),
+    name                varchar(40) not null,
+    city                varchar(40) not null,
+    state               varchar(40) not null,
     primary key(mid) 
 );
 
@@ -23,7 +23,7 @@ create table merchants
 create table products
 (
     pid                 int(4) not null,
-    name                varchar(40),
+    name                varchar(40) not null,
     category            varchar(40),
     description         varchar(1000),
     constraint  name_constr check (name in ('Printer', 'Ethernet Adapter', 'Desktop', 'Hard Drive', 'Laptop', 'Router', 'Network Card', 'Super Drive', 'Monitor')),
@@ -39,7 +39,7 @@ create table sell
 (
     mid             int(4) not null,
     pid             int(4) not null,
-    price           float(10, 2) not null,
+    price           decimal(10, 2),
     quantity_available  int(4),
     constraint price_constr check (price between 0 and 100000),
     constraint quantity_available_constr check (quantity_available between 0 and 1000),
@@ -55,7 +55,7 @@ create table orders
 (
     oid                 int(4) not null,
     shipping_method     varchar(40),
-    shipping_cost       float(10, 2) not null,
+    shipping_cost       decimal(10, 2) not null,
     constraint  shipping_method_constr check (shipping_method in ('UPS', 'FedEx', 'USPS')),
     constraint  shipping_cost_constr check (shipping_cost between 0 and 500),
     primary key(oid)
@@ -261,7 +261,7 @@ having annual_total_sales >= all
     inner join contain c on s.pid = c.pid
     inner join place p on  c.oid = p.oid
     group by m.name, year(p.order_date)
-)
+);
 
 
 
@@ -283,7 +283,7 @@ having average_cheapest_shipping_cost <=
 (
     select avg(min_shipping_cost) as average_cheapest_shipping_cost
     from CheapestShipping
-)
+);
 
 
 --------------------------------------------
