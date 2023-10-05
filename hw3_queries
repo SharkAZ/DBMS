@@ -37,9 +37,9 @@ create table products
 
 create table sell
 (
-	mid 				int(4) not null,
-    pid 				int(4) not null,
-	price				float(10, 2) not null,
+    mid 		 	int(4) not null,
+    pid 			int(4) not null,
+    price			float(10, 2) not null,
     quantity_available	int(4),
     constraint price_constr check (price between 0 and 100000),
     constraint quantity_available_constr check (quantity_available between 0 and 1000),
